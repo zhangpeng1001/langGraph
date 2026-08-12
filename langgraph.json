@@ -1,0 +1,19 @@
+{
+  "python_version": "3.11",
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "01_状态图基础": "./src/langgraph_demo/graphs/ex01_状态图基础.py:graph",
+    "02_条件路由与循环": "./src/langgraph_demo/graphs/ex02_条件路由与循环.py:graph",
+    "03_并行与MapReduce": "./src/langgraph_demo/graphs/ex03_并行与MapReduce.py:graph",
+    "04_检查点与时间旅行": "./src/langgraph_demo/graphs/ex04_检查点与时间旅行.py:graph",
+    "05_长期记忆": "./src/langgraph_demo/graphs/ex05_长期记忆.py:graph",
+    "06_人工审核": "./src/langgraph_demo/graphs/ex06_人工审核.py:graph",
+    "07_流式输出": "./src/langgraph_demo/graphs/ex07_流式输出.py:graph",
+    "08_子图协作": "./src/langgraph_demo/graphs/ex08_子图协作.py:graph",
+    "09_容错与重试": "./src/langgraph_demo/graphs/ex09_容错与重试.py:graph",
+    "10_ReAct智能体": "./src/langgraph_demo/graphs/ex10_ReAct智能体.py:graph",
+    "11_综合学习助手": "./src/langgraph_demo/graphs/ex11_综合学习助手.py:graph"
+  }
+}

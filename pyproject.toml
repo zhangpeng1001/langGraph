@@ -1,0 +1,27 @@
+[project]
+name = "langgraph-chinese-demo"
+version = "0.1.0"
+description = "面向中文学习者的 LangGraph 0.3.34 完整示例项目"
+authors = [{ name = "LangGraph Learner", email = "learner@example.com" }]
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "langgraph==0.3.34",
+    "langgraph-checkpoint==2.1.0",
+    "langgraph-prebuilt==0.1.8",
+    "langchain-core==0.3.66",
+    "langchain-openai==0.3.25",
+    "langsmith==0.4.2",
+    "python-dotenv==1.1.1",
+    "pydantic==2.11.7",
+]
+
+[project.scripts]
+langgraph-demo = "langgraph_demo.cli:main"
+
+[tool.poetry]
+packages = [{ include = "langgraph_demo", from = "src" }]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
