@@ -105,7 +105,7 @@ def prepare_plan(state: GovernanceState) -> dict[str, Any]:
 
 
 def review_plan(
-    state: GovernanceState,
+        state: GovernanceState,
 ) -> Command[Literal["execute_next", "finalize"]]:
     """暂停等待审核；恢复后只接受明确批准/拒绝，并记录审核意见。"""
 
@@ -214,7 +214,7 @@ def wait_external(state: GovernanceState) -> dict[str, Any]:
 
 
 def resolve_external(
-    state: GovernanceState,
+        state: GovernanceState,
 ) -> Command[Literal["execute_next", "finalize"]]:
     """校验回调 task_id 与当前任务一致，再推进或阻断流程。"""
 
@@ -251,7 +251,8 @@ def resolve_external(
     step = str(current.get("step"))
     step_updates = dict(state.get("steps", {}))
     if task.get("status") != "SUCCEEDED":
-        step_updates[step] = {**step_updates.get(step, {}), "status": StepStatus.FAILED.value, "message": task.get("message")}
+        step_updates[step] = {**step_updates.get(step, {}), "status": StepStatus.FAILED.value,
+                              "message": task.get("message")}
         return Command(
             update={
                 "phase": RunPhase.FAILED.value,
@@ -318,7 +319,8 @@ def build_governance_graph(checkpointer: Any | None = None):
     builder.add_node("finalize", finalize)
     builder.add_edge(START, "prepare_plan")
     builder.add_edge("prepare_plan", "review_plan")
-    builder.add_conditional_edges("execute_next", route_after_execute, {"wait_external": "wait_external", "finalize": "finalize"})
+    builder.add_conditional_edges("execute_next", route_after_execute,
+                                  {"wait_external": "wait_external", "finalize": "finalize"})
     builder.add_edge("wait_external", "resolve_external")
     builder.add_edge("finalize", END)
     return builder.compile(checkpointer=checkpointer or MemorySaver(), name="data_platform_governance")
@@ -326,3 +328,11 @@ def build_governance_graph(checkpointer: Any | None = None):
 
 checkpointer = MemorySaver()
 governance_graph = build_governance_graph(checkpointer)
+
+
+async def main():
+    governance_graph.get_graph().draw_mermaid_png(output_file_path="data_platform_graph.png")
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
