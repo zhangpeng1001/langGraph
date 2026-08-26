@@ -14,13 +14,19 @@ dependencies = [
     "langsmith==0.4.2",
     "python-dotenv==1.1.1",
     "pydantic==2.11.7",
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.34,<1.0",
 ]
 
 [project.scripts]
 langgraph-demo = "langgraph_demo.cli:main"
 
 [tool.poetry]
-packages = [{ include = "langgraph_demo", from = "src" }]
+# 同时打包原有示例和本次新增的数据中台学习包，确保 pip install -e . 后可直接启动。
+packages = [
+    { include = "langgraph_demo", from = "src" },
+    { include = "data_platform", from = "src" },
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

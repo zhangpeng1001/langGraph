@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LangGraph 数据中台治理实验室</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">LANGGRAPH · LOCAL LAB</p>
+          <h1>数据中台治理图实验室</h1>
+          <p>用一个可暂停、可恢复、可审计的本地工作流，学习检查点、人工审核与异步任务。</p>
+        </div>
+        <span id="health" class="pill">正在检查服务…</span>
+      </header>
+
+      <section class="card launch-card">
+        <div class="section-title"><h2>1. 创建治理运行</h2><span>规则解析 + LangGraph 检查点</span></div>
+        <label for="request">自然语言请求</label>
+        <textarea id="request" rows="3">治理 demo.csv，完成采集、质检、清洗、入库和发布服务</textarea>
+        <div class="examples">
+          <button class="ghost example" data-value="治理 demo.csv，跳过质检，完成清洗、入库和发布服务">跳过质检示例</button>
+          <button class="ghost example" data-value="治理 demo.csv，完成全流程">全流程示例</button>
+          <button id="create" class="primary">启动治理图</button>
+        </div>
+        <p class="hint">提示：提交后图会在人工审核节点暂停；所有任务均为本地 Mock，不会调用外部服务。</p>
+      </section>
+
+      <section id="run-panel" class="card hidden">
+        <div class="section-title"><h2>2. 运行控制台</h2><span id="phase" class="phase">—</span></div>
+        <div class="run-meta"><span>运行 ID：<code id="run-id">—</code></span><span>文件：<code id="file-name">—</code></span></div>
+        <p id="message" class="message">—</p>
+
+        <div id="review-box" class="action-box hidden">
+          <h3>人工审核</h3>
+          <p>计划会写入检查点，只有明确批准后才会启动任何 Mock 外部任务。</p>
+          <div id="plan" class="plan"></div>
+          <input id="review-comment" placeholder="审核意见（可选）" />
+          <div class="button-row">
+            <button id="approve" class="primary">批准计划并继续</button>
+            <button id="reject" class="danger">拒绝计划</button>
+          </div>
+        </div>
+
+        <div id="task-box" class="action-box hidden">
+          <h3>异步任务等待</h3>
+          <p id="task-message">—</p>
+          <div class="task-id">外部任务 ID：<code id="task-id">—</code></div>
+          <div class="button-row">
+            <button id="complete-success" class="primary">模拟成功回调</button>
+            <button id="complete-failure" class="danger">模拟失败回调</button>
+            <button id="auto-complete" class="secondary">后台 2 秒后自动回调</button>
+          </div>
+        </div>
+
+        <div class="section-title compact"><h3>步骤状态</h3><span>每一步都有独立状态和审计事件</span></div>
+        <div id="steps" class="steps"></div>
+        <div id="result" class="result hidden"></div>
+        <details><summary>查看检查点审计事件</summary><pre id="audit"></pre></details>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
