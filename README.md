@@ -278,14 +278,17 @@ poetry run python -m unittest tests.test_real_llm -v
 ## 9. 数据中台治理图学习实验室
 
 本仓库还包含一个独立的全栈学习项目：`src/data_platform`。它用 FastAPI、原生
-静态页面、LangGraph `MemorySaver` 和本地 Mock 任务引擎实现计划审核、异步等待、
-幂等任务、失败阻断和发布结果确认，不需要真实模型或任何外部服务。
+静态页面、LangGraph `MongoDBSaver` 和本地 Mock 任务引擎实现计划审核、异步等待、
+幂等任务、失败阻断和发布结果确认；它不需要真实模型或数据中台服务，但需要一套
+已授权 MongoDB 用于持久化检查点。
+
+先在 `.env` 中配置 `MONGODB_URI`，再执行：
 
 ```powershell
 pip install -e .
 python -m data_platform
 ```
 
-打开 <http://127.0.0.1:8000>，按页面按钮批准计划并模拟每一步的成功/失败回调。
+打开 <http://127.0.0.1:8003>，按页面按钮批准计划并模拟每一步的成功/失败回调。
 完整的设计说明、学习顺序和接口行为见
 [数据中台治理学习项目](docs/09_数据中台治理学习项目.md)。

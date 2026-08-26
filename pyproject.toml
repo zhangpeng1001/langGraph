@@ -14,6 +14,13 @@ dependencies = [
     "langsmith==0.4.2",
     "python-dotenv==1.1.1",
     "pydantic==2.11.7",
+    # 0.1.4 是最后一个兼容本项目 langgraph-checkpoint 2.x 的 MongoDB saver；
+    # 0.2+ 已升级到 checkpoint 3.x，不能与本教学项目的固定版本混用。
+    "langgraph-checkpoint-mongodb==0.1.4",
+    "langchain-mongodb==0.6.1",
+    "pymongo==4.12.1",
+    # motor 3.7.x 才支持当前固定的 PyMongo 4.12.x。
+    "motor==3.7.1",
     "fastapi>=0.115,<1.0",
     "uvicorn[standard]>=0.34,<1.0",
 ]

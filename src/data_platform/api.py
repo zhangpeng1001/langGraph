@@ -1,12 +1,13 @@
 """数据中台学习项目的 FastAPI 后端。
 
-接口只依赖本进程内的 LangGraph MemorySaver 和 MockPlatform，因此启动后即可在
-浏览器中学习完整流程。真实项目可将 RunManager 的检查点和平台适配器替换为
-数据库、Redis 或真实任务引擎，而无需改动前端契约。
+接口在 FastAPI 生命周期启动 MongoDBSaver；状态由 MongoDB 持久化，MockPlatform
+只模拟外部数据任务。这样审核中断可以在服务重启后按原 thread_id 恢复。
 """
 
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
@@ -14,12 +15,36 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from .checkpoint import MongoCheckpointRuntime
 from .domain import CompleteTaskRequest, CreateRunRequest, ReviewRequest, RunSnapshot
+from .graph import build_governance_graph
 from .manager import run_manager
 
 
 BASE_DIR = Path(__file__).resolve().parent
-app = FastAPI(title="LangGraph 数据中台治理学习项目", version="1.0.0")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """在 Web 服务启动/关闭时管理 MongoDB 连接池与治理图实例。"""
+
+    runtime = MongoCheckpointRuntime()
+    try:
+        # 连接、ping 和索引创建都在启动期完成；失败时服务拒绝启动，避免运行到
+        # 人工审核后才发现无法持久化 checkpoint。
+        checkpointer = await asyncio.to_thread(runtime.open)
+        run_manager.configure(build_governance_graph(checkpointer))
+        yield
+    finally:
+        run_manager.reset()
+        await asyncio.to_thread(runtime.close)
+
+
+app = FastAPI(
+    title="LangGraph 数据中台治理学习项目",
+    version="1.1.0",
+    lifespan=lifespan,
+)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
@@ -41,7 +66,7 @@ async def health() -> dict[str, str]:
 async def create_run(payload: CreateRunRequest) -> dict[str, Any]:
     """创建运行并暂停在计划人工审核节点。"""
 
-    return run_manager.create_run(payload.request)
+    return await asyncio.to_thread(run_manager.create_run, payload.request)
 
 
 @app.get("/api/runs/{run_id}", response_model=RunSnapshot)
@@ -49,8 +74,8 @@ async def get_run(run_id: str) -> dict[str, Any]:
     """读取当前检查点，前端可轮询观察异步任务恢复结果。"""
 
     try:
-        return run_manager.snapshot(run_id)
-    except KeyError as exc:
+        return await asyncio.to_thread(run_manager.snapshot, run_id)
+    except (KeyError, RuntimeError) as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
@@ -59,8 +84,12 @@ async def review_run(run_id: str, payload: ReviewRequest) -> dict[str, Any]:
     """提交人工审核决定并恢复图线程。"""
 
     try:
-        return run_manager.resume(run_id, {"decision": payload.decision, "comment": payload.comment})
-    except KeyError as exc:
+        return await asyncio.to_thread(
+            run_manager.resume,
+            run_id,
+            {"decision": payload.decision, "comment": payload.comment},
+        )
+    except (KeyError, RuntimeError) as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
@@ -69,8 +98,14 @@ async def complete_task(run_id: str, task_id: str, payload: CompleteTaskRequest)
     """立即模拟一次外部回调，可选择成功或失败以观察分支。"""
 
     try:
-        return run_manager.complete_task(run_id, task_id, success=payload.success, message=payload.message)
-    except (KeyError, ValueError) as exc:
+        return await asyncio.to_thread(
+            run_manager.complete_task,
+            run_id,
+            task_id,
+            success=payload.success,
+            message=payload.message,
+        )
+    except (KeyError, ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
@@ -80,7 +115,7 @@ async def auto_complete_task(run_id: str, task_id: str, payload: CompleteTaskReq
 
     try:
         return await run_manager.auto_complete(run_id, task_id, success=payload.success, delay=2.0, message=payload.message)
-    except (KeyError, ValueError) as exc:
+    except (KeyError, ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
@@ -89,6 +124,6 @@ async def cancel_run(run_id: str) -> dict[str, Any]:
     """通过恢复挂起节点结束运行，展示可取消的人机协作边界。"""
 
     try:
-        return run_manager.resume(run_id, {"task_id": "__cancel__"})
-    except KeyError as exc:
+        return await asyncio.to_thread(run_manager.resume, run_id, {"task_id": "__cancel__"})
+    except (KeyError, RuntimeError) as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

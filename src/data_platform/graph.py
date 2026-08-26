@@ -1,8 +1,8 @@
 """数据中台治理 LangGraph 编排图。
 
 图只编排确定性的治理步骤，外部平台由 ``MockPlatform`` 适配器提供。图中的
-两个 ``interrupt`` 分别代表：计划人工审核、外部异步任务回调等待。编译时挂载
-``MemorySaver``，所以相同 ``thread_id`` 可以在暂停后恢复，也可以从检查点读取。
+两个 ``interrupt`` 分别代表：计划人工审核、外部异步任务回调等待。生产入口会将
+MongoDBSaver 传给本模块的图工厂，因此相同 ``thread_id`` 能跨进程恢复检查点。
 """
 
 from __future__ import annotations
@@ -13,7 +13,6 @@ import sys
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
@@ -322,8 +321,13 @@ def finalize(state: GovernanceState) -> dict[str, Any]:
     return {"pending_action": None, "ui_message": message, "audit": _audit(state, "RUN_FINISHED", phase=phase)}
 
 
-def build_governance_graph(checkpointer: Any | None = None):
-    """组装并编译治理图，外部可传入检查点实现以便测试或持久化替换。"""
+def build_governance_graph(checkpointer: Any):
+    """组装并编译治理图。
+
+    生产环境必须显式传入 MongoDBSaver，避免误用进程内 MemorySaver 导致服务重启
+    后丢失人工审核和异步任务等待状态。单元测试可显式注入 MemorySaver，以保持
+    测试独立、快速且不触碰真实 MongoDB。
+    """
 
     builder = StateGraph(GovernanceState)
     builder.add_node("prepare_plan", prepare_plan)
@@ -338,15 +342,24 @@ def build_governance_graph(checkpointer: Any | None = None):
                                   {"wait_external": "wait_external", "finalize": "finalize"})
     builder.add_edge("wait_external", "resolve_external")
     builder.add_edge("finalize", END)
-    return builder.compile(checkpointer=checkpointer or MemorySaver(), name="data_platform_governance")
-
-
-checkpointer = MemorySaver()
-governance_graph = build_governance_graph(checkpointer)
+    return builder.compile(checkpointer=checkpointer, name="data_platform_governance")
 
 
 async def main():
-    governance_graph.get_graph().draw_mermaid_png(output_file_path="data_platform_graph.png")
+    """用 MongoDB 检查点生成当前工作流图，供直接运行本文件时学习。"""
+
+    # 延迟导入使单元测试只导入图工厂时无需读取环境变量或连接数据库。
+    if __package__ in (None, ""):
+        from data_platform.checkpoint import MongoCheckpointRuntime
+    else:
+        from .checkpoint import MongoCheckpointRuntime
+
+    runtime = MongoCheckpointRuntime()
+    try:
+        graph = build_governance_graph(runtime.open())
+        graph.get_graph().draw_mermaid_png(output_file_path="data_platform_graph.png")
+    finally:
+        runtime.close()
 
 
 if __name__ == '__main__':

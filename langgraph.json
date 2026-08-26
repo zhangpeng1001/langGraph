@@ -14,7 +14,6 @@
     "08_子图协作": "./src/langgraph_demo/graphs/ex08_子图协作.py:graph",
     "09_容错与重试": "./src/langgraph_demo/graphs/ex09_容错与重试.py:graph",
     "10_ReAct智能体": "./src/langgraph_demo/graphs/ex10_ReAct智能体.py:graph",
-    "11_综合学习助手": "./src/langgraph_demo/graphs/ex11_综合学习助手.py:graph",
-    "12_数据中台治理图学习": "./src/data_platform/graph.py:governance_graph"
+    "11_综合学习助手": "./src/langgraph_demo/graphs/ex11_综合学习助手.py:graph"
   }
 }
