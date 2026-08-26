@@ -7,15 +7,30 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
+import sys
+from pathlib import Path
 from typing import Any, Literal, TypedDict
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
-from .domain import GovernanceStep, RunPhase, StepStatus
-from .mock_platform import mock_platform
+# 兼容两种运行方式：
+# 1) 作为包模块被导入（通过 uvicorn / python -m data_platform）→ 使用相对导入
+# 2) 直接作为脚本运行（python graph.py）→ 补 sys.path 后用顶层绝对导入
+if __package__ in (None, ""):
+    # 脚本直跑：把 src 目录推到 sys.path 最前，按顶层模块解析同包兄弟模块
+    _SRC_DIR = Path(__file__).resolve().parent.parent
+    if str(_SRC_DIR) not in sys.path:
+        sys.path.insert(0, str(_SRC_DIR))
+    from data_platform.domain import GovernanceStep, RunPhase, StepStatus
+    from data_platform.mock_platform import mock_platform
+else:
+    # 包内导入：保持相对导入，不破坏包上下文
+    from .domain import GovernanceStep, RunPhase, StepStatus
+    from .mock_platform import mock_platform
 
 
 class GovernanceState(TypedDict, total=False):
