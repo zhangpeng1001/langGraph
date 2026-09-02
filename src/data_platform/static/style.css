@@ -38,6 +38,10 @@ code { color: #475569; background: #f1f5f9; border-radius: 5px; padding: 2px 5px
 .plan-item { padding: 6px 10px; border-radius: 7px; background: #e9edff; color: #4659c7; font-size: 13px; }
 .plan-item.skip { background: #fef3c7; color: #92400e; }
 .task-id { font-size: 13px; color: #64748b; margin: 8px 0; }
+/* 自动 Mock 任务的实时百分比。宽度仅由后端快照或事件中的 progress 驱动。 */
+.progress-track { height: 9px; overflow: hidden; border-radius: 999px; background: #e7edf7; margin-top: 12px; }
+.progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5366df, #22a06b); transition: width .35s ease; }
+.progress-text { color: #526176 !important; font-size: 13px !important; margin: 7px 0 !important; }
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
 .step { border: 1px solid #e6eaf0; border-radius: 10px; padding: 12px; background: #fcfdff; }
 .step strong { display: block; font-size: 14px; margin-bottom: 6px; }
@@ -45,6 +49,18 @@ code { color: #475569; background: #f1f5f9; border-radius: 5px; padding: 2px 5px
 .status { font-size: 12px; font-weight: 700; }
 .status-SUCCEEDED { color: #138a54; }.status-WAITING_EXTERNAL { color: #b36b00; }.status-FAILED { color: #c63737; }.status-PENDING { color: #94a3b8; }.status-SKIPPED { color: #a16207; }
 .result { background: #ecfdf3; color: #166534; padding: 14px; border-radius: 10px; margin-top: 16px; }
+/* 终态入口与实时日志使用不同色彩，帮助学习者区分业务结果和传输层通知。 */
+.terminal-task { border-color: #a7f3d0; background: #f0fdf4; }
+.realtime-log { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow: auto; border: 1px solid #dbe3ef; border-radius: 10px; background: #f8fafc; }
+.realtime-log li { padding: 9px 12px; border-bottom: 1px solid #e7edf5; font-size: 12px; color: #334155; word-break: break-word; }
+.realtime-log li:last-child { border-bottom: 0; }
+.realtime-event { border-left: 3px solid #7281e8; }.realtime-mqtt { border-left: 3px solid #f59e0b; color: #7c4a03 !important; }.realtime-chat { border-left: 3px solid #22a06b; }
+/* 交流页面沿用轻量单列布局，避免示例 CSS 掩盖 WebSocket 消息流的学习重点。 */
+.chat-messages { min-height: 260px; max-height: 460px; overflow: auto; padding: 14px; border: 1px solid #dbe3ef; border-radius: 12px; background: #f8fafc; display: flex; flex-direction: column; gap: 9px; }
+.chat-message { align-self: flex-start; max-width: min(85%, 680px); padding: 10px 12px; border-radius: 10px; background: #e9edff; color: #334155; white-space: pre-wrap; word-break: break-word; }
+.chat-form { display: flex; gap: 9px; margin-top: 12px; }
+.chat-form input { flex: 1; }
 pre { white-space: pre-wrap; background: #0f172a; color: #dbeafe; border-radius: 9px; padding: 14px; font-size: 12px; max-height: 260px; overflow: auto; }
 .hidden { display: none !important; }
 @media (max-width: 680px) { .hero { flex-direction: column; } .card { padding: 18px; } }
+@media (max-width: 680px) { .chat-form { flex-direction: column; } }

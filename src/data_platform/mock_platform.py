@@ -48,12 +48,34 @@ class MockPlatform:
                 "run_id": run_id,
                 "step": step.value,
                 "status": "PENDING",
+                # 进度属于外部任务引擎的实时事实，不写入 LangGraph 检查点；管理器
+                # 每次生成 API 快照时都会重新读取它，借此演示“状态快照 + 事件流”。
+                "progress": 0,
                 "idempotency_key": idempotency_key,
                 "created_at": _now(),
                 "message": "任务已提交，等待 Mock 平台回调",
             }
             self._tasks[task_id] = task
             self._idempotency[idempotency_key] = task_id
+            return dict(task)
+
+    def update_progress(self, task_id: str, *, progress: int, message: str) -> dict[str, Any]:
+        """更新运行中任务的进度，供后台模拟器逐段报告状态。
+
+        真实任务平台可能乱序或重复上报进度。这里拒绝终态后的更新，并把进度限定为
+        0 到 99，保证只有 ``complete_task`` 才能写入 100% 和最终结果，避免前端把
+        “看起来完成”误判为 LangGraph 已经恢复。
+        """
+
+        with self._lock:
+            if task_id not in self._tasks:
+                raise KeyError(f"不存在的 Mock 任务：{task_id}")
+            task = self._tasks[task_id]
+            if task["status"] in {"SUCCEEDED", "FAILED"}:
+                return dict(task)
+            task["status"] = "RUNNING"
+            task["progress"] = max(0, min(int(progress), 99))
+            task["message"] = message
             return dict(task)
 
     def complete_task(self, task_id: str, *, success: bool, message: str) -> dict[str, Any]:
@@ -67,6 +89,9 @@ class MockPlatform:
             if task["status"] in {"SUCCEEDED", "FAILED"}:
                 return dict(task)
             task["status"] = "SUCCEEDED" if success else "FAILED"
+            # 失败也代表模拟器已停止推进；以 100% 表示任务已经得到确定结果，而非
+            # 把百分比错误地当作“成功率”。最终业务成功与否仍由 status 区分。
+            task["progress"] = 100
             task["message"] = message
             task["completed_at"] = _now()
             if success and task["step"] == GovernanceStep.PUBLISH.value:
@@ -82,6 +107,13 @@ class MockPlatform:
         with self._lock:
             task = self._tasks.get(task_id)
             return dict(task) if task else None
+
+    def reset(self) -> None:
+        """清空进程内 Mock 任务，主要供独立测试隔离全局模拟器状态。"""
+
+        with self._lock:
+            self._tasks.clear()
+            self._idempotency.clear()
 
 
 mock_platform = MockPlatform()

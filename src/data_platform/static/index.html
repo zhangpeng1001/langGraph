@@ -26,7 +26,7 @@
           <button class="ghost example" data-value="治理 demo.csv，完成全流程">全流程示例</button>
           <button id="create" class="primary">启动治理图</button>
         </div>
-        <p class="hint">提示：提交后图会在人工审核节点暂停；所有任务均为本地 Mock，不会调用外部服务。</p>
+        <p class="hint">提示：提交后图会在人工审核节点暂停；任务进度、Mock MQTT 和 WebSocket 均为本地教学模拟，不会调用外部服务。</p>
       </section>
 
       <section id="run-panel" class="card hidden">
@@ -49,17 +49,37 @@
           <h3>异步任务等待</h3>
           <p id="task-message">—</p>
           <div class="task-id">外部任务 ID：<code id="task-id">—</code></div>
+          <div class="progress-track" aria-label="Mock 外部任务进度"><div id="task-progress-bar" class="progress-bar"></div></div>
+          <p id="task-progress" class="progress-text">当前进度：0%</p>
           <div class="button-row">
             <button id="complete-success" class="primary">模拟成功回调</button>
             <button id="complete-failure" class="danger">模拟失败回调</button>
-            <button id="auto-complete" class="secondary">后台 2 秒后自动回调</button>
           </div>
+          <p class="hint">后台会自动按 25%、50%、75%、100% 推进；可抢先点击按钮观察手动回调分支。</p>
         </div>
 
         <div class="section-title compact"><h3>步骤状态</h3><span>每一步都有独立状态和审计事件</span></div>
         <div id="steps" class="steps"></div>
         <div id="result" class="result hidden"></div>
+        <div id="terminal-task" class="action-box terminal-task hidden">
+          <h3>任务交流入口</h3>
+          <p>运行已进入终态。点击任务可进入交流页面，查看完整事件流并发送本地演示消息。</p>
+          <button id="open-conversation" class="secondary">进入任务交流页面</button>
+        </div>
+        <div class="section-title compact"><h3>实时消息</h3><span id="realtime-state">正在等待 WebSocket…</span></div>
+        <ol id="realtime-log" class="realtime-log" aria-live="polite"></ol>
         <details><summary>查看检查点审计事件</summary><pre id="audit"></pre></details>
+      </section>
+
+      <section id="conversation-panel" class="card hidden">
+        <div class="section-title"><h2>3. 任务交流页面</h2><button id="back-to-run" class="ghost">返回运行控制台</button></div>
+        <p class="message">此处通过运行级 WebSocket 收发消息。回复由本地确定性规则生成，不会调用大模型。</p>
+        <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+        <form id="chat-form" class="chat-form">
+          <input id="chat-input" maxlength="500" placeholder="例如：请说明当前断点为什么需要人工审核？" autocomplete="off" />
+          <button id="chat-send" class="primary" type="submit">发送消息</button>
+        </form>
+        <p id="chat-state" class="hint">正在连接运行消息流…</p>
       </section>
     </main>
     <script src="/static/app.js"></script>

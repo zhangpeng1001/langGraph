@@ -279,8 +279,9 @@ poetry run python -m unittest tests.test_real_llm -v
 
 本仓库还包含一个独立的全栈学习项目：`src/data_platform`。它用 FastAPI、原生
 静态页面、LangGraph `MongoDBSaver` 和本地 Mock 任务引擎实现计划审核、异步等待、
-幂等任务、失败阻断和发布结果确认；它不需要真实模型或数据中台服务，但需要一套
-已授权 MongoDB 用于持久化检查点。
+幂等任务、失败阻断和发布结果确认。它还使用内存 Mock MQTT Broker 与 WebSocket
+演示“通知前端刷新快照，再持续接收任务消息”的实时交互；不需要真实模型、MQTT 或
+数据中台服务，但需要一套已授权 MongoDB 用于持久化检查点。
 
 先在 `.env` 中配置 `MONGODB_URI`，再执行：
 
@@ -289,6 +290,7 @@ pip install -e .
 python -m data_platform
 ```
 
-打开 <http://127.0.0.1:8003>，按页面按钮批准计划并模拟每一步的成功/失败回调。
+打开 <http://127.0.0.1:8003>，批准计划后观察 Mock MQTT 通知、WebSocket 进度消息和
+自动回调；也可点击成功/失败按钮抢先模拟回调，并在任务完成后进入交流页面。
 完整的设计说明、学习顺序和接口行为见
 [数据中台治理学习项目](docs/09_数据中台治理学习项目.md)。
